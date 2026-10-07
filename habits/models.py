@@ -33,7 +33,7 @@ class Habit(models.Model):
         max_length=255, null=True, blank=True, verbose_name="Вознаграждение"
     )
     duration = models.PositiveIntegerField(
-        validators=[MinValueValidator(60), MaxValueValidator(120)],
+        validators=[MaxValueValidator(120)],
         verbose_name="Время на выполнение (секунды)",
     )
     is_public = models.BooleanField(default=False, verbose_name="Признак публичности")

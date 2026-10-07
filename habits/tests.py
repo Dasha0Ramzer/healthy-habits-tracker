@@ -1,11 +1,14 @@
-from datetime import time
+from datetime import time, timedelta
+from unittest.mock import patch
 
 from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from users.models import User
 
 from .models import Habit
+from .tasks import send_reminder_about_habit
 
 
 class HabitTests(APITestCase):
@@ -152,3 +155,38 @@ class HabitTests(APITestCase):
         response = self.client.get("/habits/")
         self.assertIn("count", response.data)
         self.assertIn("results", response.data)
+
+
+class CeleryTaskTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create(
+            email="task@example.com", password=make_password("StrongPass123")
+        )
+        self.user.tg_chat_id = 12345
+        self.user.save()
+        self.habit = Habit.objects.create(
+            user=self.user,
+            place="Дом",
+            time=timezone.now().time(),
+            action="Зарядка",
+            duration=60,
+        )
+
+    def test_task_sends_message(self):
+        with patch("habits.tasks.send_telegram_message") as mock_send:
+            send_reminder_about_habit()
+            mock_send.assert_called()
+
+    def test_task_skips_recently_reminded(self):
+        self.habit.last_reminded_at = timezone.now() - timedelta(hours=1)
+        self.habit.save()
+        with patch("habits.tasks.send_telegram_message") as mock_send:
+            send_reminder_about_habit()
+            mock_send.assert_not_called()
+
+    def test_task_skips_user_without_chat_id(self):
+        self.user.tg_chat_id = None
+        self.user.save()
+        with patch("habits.tasks.send_telegram_message") as mock_send:
+            send_reminder_about_habit()
+            mock_send.assert_not_called()

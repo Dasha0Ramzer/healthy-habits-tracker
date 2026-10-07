@@ -1,10 +1,11 @@
+from dotenv import load_dotenv
+
 import os
 from datetime import timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -26,6 +27,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "drf_yasg",
+    "django_celery_beat",
     "users",
     "habits",
 ]

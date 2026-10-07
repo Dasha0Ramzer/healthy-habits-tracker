@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from celery import shared_task
-from django.db.models import Q
 from django.utils import timezone
 
 from .models import Habit
@@ -22,7 +21,6 @@ def send_reminder_about_habit():
     ).time()
 
     habits = Habit.objects.select_related("user").filter(
-        Q(last_reminded_at__isnull=True),
         time__gte=start_time,
         time__lte=end_time,
         user__tg_chat_id__isnull=False,

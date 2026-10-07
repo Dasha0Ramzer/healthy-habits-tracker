@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
 from .models import Habit
-from .validators import (validate_exclusive_reward_or_related,
-                         validate_pleasant_has_no_reward_or_related,
-                         validate_related_is_pleasant)
+from .validators import (
+    validate_exclusive_reward_or_related,
+    validate_pleasant_has_no_reward_or_related,
+    validate_related_is_pleasant,
+)
 
 
 class HabitSerializer(serializers.ModelSerializer):
