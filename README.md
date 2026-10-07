@@ -3,20 +3,27 @@
 Django REST Framework проект для трекинга привычек.
 
 ## Технологии
-- Python 3.14
-- Django + DRF
-- PostgreSQL
+- Python 3.14, Django + DRF
+- PostgreSQL, Redis
 - Celery + django-celery-beat
 - JWT-авторизация (SimpleJWT)
 - Swagger (drf-yasg)
 
-## Установка
-1. `poetry install`
-2. Настрой `.env` (SECRET_KEY, DB_*, CELERY_*, и т.д.)
-3. `python manage.py migrate`
-4. `python manage.py runserver`
+## Запуск через Docker
 
-## Запуск Celery
-```bash
-poetry run celery -A config worker -l info
-poetry run celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+1. Склонируйте репозиторий и перейдите в папку проекта.
+2. Создайте файл `.env` по образцу `.env.example` (или скопируйте шаблон ниже) и заполните своими значениями:
+
+```env
+SECRET_KEY=ваш_секретный_ключ
+DEBUG=True
+DATABASE_NAME=имя_базы_данных
+DATABASE_USER=имя_пользователя
+DATABASE_PASSWORD=ваш_пароль
+DB_HOST=db
+EMAIL_HOST_USER=ваш_адрес_электронной_почты
+EMAIL_HOST_PASSWORD=ваш_пароль_приложения_для_яндекс_почты
+STRIPE_API_KEY=ваш_ключ_stripe
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/1
+BOT_TOKEN=ваш_токен_бота_телеграм
