@@ -1,0 +1,93 @@
+name: Test, Lint and Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test_and_lint:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Lint with flake8
+        run: poetry run flake8 .
+
+      - name: Run tests
+        env:
+          SECRET_KEY: test-secret-key
+          DEBUG: True
+          ALLOWED_HOSTS: localhost
+          DATABASE_NAME: test_db
+          DATABASE_USER: test_user
+          DATABASE_PASSWORD: test_pass
+          DB_HOST: localhost
+          CELERY_BROKER_URL: redis://localhost:6379/0
+          CELERY_RESULT_BACKEND: redis://localhost:6379/1
+          BOT_TOKEN: test
+          STRIPE_API_KEY: test
+          EMAIL_HOST_USER: test@example.com
+          EMAIL_HOST_PASSWORD: test
+          DEFAULT_FROM_EMAIL: test@example.com
+        run: poetry run python manage.py test
+
+  build:
+    needs: test_and_lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker Image
+        run: docker build -t myapp .
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/app
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
