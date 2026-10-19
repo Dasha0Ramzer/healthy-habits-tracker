@@ -46,9 +46,6 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
-      - name: Lint with flake8
-        run: poetry run flake8 .
-
       - name: Run tests
         env:
           SECRET_KEY: test-secret-key
@@ -66,6 +63,9 @@ jobs:
           EMAIL_HOST_PASSWORD: test
           DEFAULT_FROM_EMAIL: test@example.com
         run: poetry run python manage.py test
+
+      - name: Lint with flake8
+        run: poetry run flake8 .
 
   build:
     needs: test_and_lint
